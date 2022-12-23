@@ -1,4 +1,3 @@
-
 [submodule "PKSM-Core"]
 	path = PKSM-Core
 	url = https://github.com/biD3V/PKSM-Core.git
