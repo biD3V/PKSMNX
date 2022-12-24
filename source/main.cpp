@@ -145,7 +145,7 @@ int main(int argc, char* argv[])
             for (size_t i = 0; i < save->partyCount(); i++)
             {
                 std::shared_ptr<pksm::PKX> pkm = save.get()->pkm(i);
-                printf("    %s\n", pkm->nickname().c_str());
+                printf("    %s (%s)\n", pkm->nickname().c_str(),pkm->species().localize(pksm::Language::ENG).c_str());
                 printf("        %i/%i/%i/%i/%i/%i\n",pkm->ev(pksm::Stat::HP),pkm->ev(pksm::Stat::ATK),pkm->ev(pksm::Stat::SPATK),pkm->ev(pksm::Stat::DEF),pkm->ev(pksm::Stat::SPDEF),pkm->ev(pksm::Stat::SPD));
             }
             
