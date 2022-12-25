@@ -42,12 +42,13 @@ BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
-#ROMFS	:=	romfs
+#ROMFS		:=	resources
 APP_TITLE	:=	SVEdit
 APP_AUTHOR	:=	biDev
 APP_VERSION	:=	0.0.1
 
 SVEDIT_PATH	:=	.
+BOREALIS_PATH := $(TOPDIR)/borealis
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -59,7 +60,7 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=c++20 -fexceptions
+CXXFLAGS	:= $(CFLAGS) -std=c++20 -fexceptions
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)

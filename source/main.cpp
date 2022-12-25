@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <vector>
+
 // Include the main libnx system header, for Switch development
 #include <switch.h>
 
@@ -14,53 +16,56 @@
 #include <sav/Sav.hpp>
 #include <pkx/PKX.hpp>
 #include <pkx/PK9.hpp>
+#include <utils/i18n.hpp>
 
-// Main program entrypoint
-int main(int argc, char* argv[])
-{
+struct Game {
+    std::string name;
+    u64 titleID;
+};
+
+enum PAGE {
+    PAGE_ACCOUNTS,
+    PAGE_SAVES,
+    PAGE_DETAILS,
+};
+
+void loadSaves(AccountUid uid, std::vector<Game> *availableGames) {
+    consoleClear();
+    availableGames->clear();
+
+    struct Game games[] = {
+        {"Sword",0x0100ABF008968000},
+        {"Shield",0x01008DB008C2C000},
+        {"Scarlet",0x0100A3D008C5C000},
+        {"Violet",0x01008F6008C5E000}
+    };
+
+    for (Game game : games) {
+        if (R_SUCCEEDED(fsdevMountSaveData(game.name.c_str(),game.titleID,uid))) availableGames->push_back(game);
+        fsdevUnmountDevice(game.name.c_str());
+    }
+}
+
+void saveSelection(std::vector<Game> games, int selection, AccountUid uid) {
+    consoleClear();
+
+    selection = selection % games.size();
+
+    for (size_t i = 0; i < games.size(); i++)
+    {
+        if (i == selection) printf("> ");
+        else printf("  ");
+        printf("%s\n",games[i].name.c_str());
+    }
+}
+
+void loadSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> *save) {
+    
     Result rc = 0;
-
-    DIR* dir;
-    struct dirent* ent;
-
-    AccountUid uid={0};
-    u64 application_id=0x01008F6008C5E000;//ApplicationId of the save to mount, in this case BOTW.
-
-    // This example uses a text console, as a simple way to output text to the screen.
-    // If you want to write a software-rendered graphics application,
-    //   take a look at the graphics/simplegfx example, which uses the libnx Framebuffer API instead.
-    // If on the other hand you want to write an OpenGL based application,
-    //   take a look at the graphics/opengl set of examples, which uses EGL instead.
-    consoleInit(NULL);
-
-    // Configure our supported input layout: a single player with standard controller styles
-    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
-
-    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
-    PadState pad;
-    padInitializeDefault(&pad);
-
-    rc = accountInitialize(AccountServiceType_Application);
-    if (R_FAILED(rc)) {
-        printf("accountInitialize() failed: 0x%x\n", rc);
-    }
-
-    if (R_SUCCEEDED(rc)) {
-        rc = accountGetPreselectedUser(&uid);
-        accountExit();
-
-        if (R_FAILED(rc)) {
-            printf("accountGetPreselectedUser() failed: 0x%x\n", rc);
-        }
-    }
-
-    if (R_SUCCEEDED(rc)) {
-        printf("Using application_id=0x%016lx\n", application_id);
-    }
 
     //You can use any device-name. If you want multiple saves mounted at the same time, you must use different device-names for each one.
     if (R_SUCCEEDED(rc)) {
-        rc = fsdevMountSaveData("save", application_id, uid);//See also libnx fs.h/fs_dev.h
+        rc = fsdevMountSaveData("save", game.titleID, uid);//See also libnx fs.h/fs_dev.h
         if (R_FAILED(rc)) {
             printf("fsdevMountSaveData() failed: 0x%x\n", rc);
         }
@@ -69,26 +74,8 @@ int main(int argc, char* argv[])
     //At this point you can use the mounted device with standard stdio.
     //After modifying savedata, in order for the changes to take affect you must use: rc = fsdevCommitDevice("save");
     //See also libnx fs_dev.h for fsdevCommitDevice.
-    
-    std::shared_ptr<pksm::Sav> save;
 
     if (R_SUCCEEDED(rc)) {
-        dir = opendir("save:/");//Open the "save:/" directory.
-        if(dir==NULL)
-        {
-            printf("Failed to open dir.\n");
-        }
-        else
-        {
-            printf("Dir-listing for 'save:/':\n");
-            while ((ent = readdir(dir)))
-            {
-                printf("d_name: %s\n", ent->d_name);
-            }
-            closedir(dir);
-            printf("Done.\n");
-        }
-
         FILE* saveFile = fopen("save:/main","rb");
         u32 size;
         std::shared_ptr<u8[]> saveData = nullptr;
@@ -106,11 +93,10 @@ int main(int argc, char* argv[])
                 fread(saveData.get(), 1, size, saveFile);
                 fclose(saveFile);
 
-                save = pksm::Sav::getSave(saveData, size);
+                *save = pksm::Sav::getSave(saveData, size);
 
                 if (save) {
                     printf("save loaded");
-                    // printf("Trainer name: %s", save.get()->otName().c_str());
                 } else {
                     printf("save wrong");
                 }
@@ -123,6 +109,77 @@ int main(int argc, char* argv[])
         //Any devices still mounted at app exit are automatically unmounted.
         fsdevUnmountDevice("save");
     }
+}
+
+void saveOverview(std::shared_ptr<pksm::Sav> *save, int selection) {
+    consoleClear();
+
+    selection = selection % 2;
+
+    if (save) {
+        printf("Trainer name: %s\n", save->get()->otName().c_str());
+        printf("Play Time: %i:%i:%i\n", save->get()->playedHours(), save->get()->playedMinutes(), save->get()->playedSeconds());
+        printf("Money: %i\n",save->get()->money());
+        printf("BP: %i\n",save->get()->BP());
+        if (selection == 0) printf("> Party\n  Boxes");
+        else printf("  Party\n> Boxes");
+        
+        // printf("Party:\n");
+        // for (size_t i = 0; i < save->partyCount(); i++)
+        // {
+        //     std::shared_ptr<pksm::PKX> pkm = save.get()->pkm(i);
+        //     printf("    %s\n", pkm->nickname().c_str());
+        //     printf("        EVs:\n");
+        //     printf("            HP: %i  ATK: %i  SPATK: %i  DEF: %i  SPDEF: %i  SPD: %i\n",pkm->ev(pksm::Stat::HP),pkm->ev(pksm::Stat::ATK),pkm->ev(pksm::Stat::SPATK),pkm->ev(pksm::Stat::DEF),pkm->ev(pksm::Stat::SPDEF),pkm->ev(pksm::Stat::SPD));
+        // }
+    }
+}
+
+void showAccountSelection(AccountUid *uids, s32 total, int selection) {
+    consoleClear();
+
+    selection = selection % total;
+
+    for (size_t i = 0; i < total; i++)
+    {
+        if (selection == i) printf("> ");
+        else printf("  ");
+        printf("User %li    0x%lx 0x%lx\n",i + 1,uids[i].uid[0],uids[i].uid[1]);
+    }
+    
+}
+
+// Main program entrypoint
+int main(int argc, char* argv[])
+{
+    // This example uses a text console, as a simple way to output text to the screen.
+    // If you want to write a software-rendered graphics application,
+    //   take a look at the graphics/simplegfx example, which uses the libnx Framebuffer API instead.
+    // If on the other hand you want to write an OpenGL based application,
+    //   take a look at the graphics/opengl set of examples, which uses EGL instead.
+    consoleInit(NULL);
+
+    // Configure our supported input layout: a single player with standard controller styles
+    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+
+    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    PadState pad;
+    padInitializeDefault(&pad);
+
+    int selection = 0;
+    int saveSelec = 0;
+    int boxSelect = 0;
+
+    accountInitialize(AccountServiceType_Administrator);
+    AccountUid *uids = new AccountUid[ACC_USER_LIST_SIZE];
+    s32 uidCount;
+    accountListAllUsers(uids,ACC_USER_LIST_SIZE,&uidCount);
+    
+    enum PAGE page = PAGE_ACCOUNTS;
+    showAccountSelection(uids,uidCount,selection);
+
+    std::vector<Game> availableGames;
+    std::shared_ptr<pksm::Sav> save;
 
     // Main loop
     while (appletMainLoop())
@@ -137,27 +194,78 @@ int main(int argc, char* argv[])
         if (kDown & HidNpadButton_Plus)
             break; // break in order to return to hbmenu
 
-        // Your code goes here
-        if (kDown & HidNpadButton_A && save) {
-            printf("\n\nTrainer name: %s\n", save.get()->otName().c_str());
-            printf("Play Time: %i:%i:%i\n", save.get()->playedHours(), save.get()->playedMinutes(), save.get()->playedSeconds());
-            printf("Party:\n");
-            for (size_t i = 0; i < save->partyCount(); i++)
+        if (kDown & HidNpadButton_AnyDown) {
+            switch (page)
             {
-                std::shared_ptr<pksm::PKX> pkm = save.get()->pkm(i);
-                printf("    %s (%s)\n", pkm->nickname().c_str(),pkm->species().localize(pksm::Language::ENG).c_str());
-                printf("        %i/%i/%i/%i/%i/%i\n",pkm->ev(pksm::Stat::HP),pkm->ev(pksm::Stat::ATK),pkm->ev(pksm::Stat::SPATK),pkm->ev(pksm::Stat::DEF),pkm->ev(pksm::Stat::SPDEF),pkm->ev(pksm::Stat::SPD));
-            }
+            case PAGE_ACCOUNTS:
+                selection++;
+                showAccountSelection(uids,uidCount,selection);
+                break;
             
-            // if (save.get()->pkm(1)) {
-            //     std::shared_ptr<pksm::PKX> pkm = save.get()->pkm(0);
-            //     printf("    %s\n", pkm->nickname().c_str());
-            // }
-            // if (save.get()->pkm(2)) {
-            //     std::shared_ptr<pksm::PKX> pkm = save.get()->pkm(0);
-            //     printf("    %s\n", pkm->nickname().c_str());
-            // }
+            case PAGE_SAVES:
+                saveSelec++;
+                saveSelection(availableGames,saveSelec,uids[selection]);
+                break;
+
+            case PAGE_DETAILS:
+                boxSelect++;
+                saveOverview(&save,boxSelect);
+                break;
+
+            default:
+                break;
+            }
         }
+
+        if (kDown & HidNpadButton_AnyUp) {
+            switch (page)
+            {
+            case PAGE_ACCOUNTS:
+                selection+=-1;
+                showAccountSelection(uids,uidCount,selection);
+                break;
+            
+            case PAGE_SAVES:
+                saveSelec+=-1;
+                saveSelection(availableGames,saveSelec,uids[selection]);
+            
+            case PAGE_DETAILS:
+                boxSelect+=-1;
+                saveOverview(&save,boxSelect);
+                break;
+
+            default:
+                break;
+            }
+        }
+
+        if (kDown & HidNpadButton_A) {
+            switch (page)
+            {
+            case PAGE_ACCOUNTS:
+                page = PAGE_SAVES;
+                loadSaves(uids[selection],&availableGames);
+                saveSelection(availableGames,saveSelec,uids[selection]);
+                break;
+            
+            case PAGE_SAVES:
+                page = PAGE_DETAILS;
+                loadSave(availableGames[saveSelec],uids[selection],&save);
+                saveOverview(&save,boxSelect);
+                break;
+
+            default:
+                showAccountSelection(uids,uidCount,selection);
+                break;
+            }
+        }
+
+        if (kDown & HidNpadButton_B) {
+            page = PAGE_ACCOUNTS;
+            showAccountSelection(uids,uidCount,selection);
+        }
+
+        // Your code goes here
 
         // Update the console, sending a new frame to the display
         consoleUpdate(NULL);
