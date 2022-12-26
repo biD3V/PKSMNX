@@ -42,7 +42,7 @@ BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
-#ROMFS		:=	resources
+ROMFS		:=	resources
 APP_TITLE	:=	PKSMNX
 APP_AUTHOR	:=	biDev
 APP_VERSION	:=	0.0.1
@@ -74,6 +74,7 @@ LIBS	:= -lnx
 LIBDIRS	:= $(PORTLIBS) $(LIBNX)
 
 include $(TOPDIR)/PKSM-Core/PKSMCore.mk
+include $(BOREALIS_PATH)/library/borealis.mk
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
