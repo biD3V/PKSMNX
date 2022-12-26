@@ -29,6 +29,7 @@ enum PAGE {
     PAGE_DETAILS,
     PAGE_PKMLIST,
     PAGE_BOXES,
+    PAGE_PKM,
 };
 
 void loadSaves(AccountUid uid, std::vector<Game> *availableGames) {
@@ -152,6 +153,25 @@ void pkmList(std::shared_ptr<pksm::Sav>& save,int bxSelect, int& selection) {
         
     }
     
+}
+
+void pkmDetails(std::shared_ptr<pksm::Sav>& save,int boxSelect,int pkmSelect) {
+    consoleClear();
+    std::shared_ptr<pksm::PKX> pkm;
+
+    if (boxSelect == 0) {
+        pkm = save->pkm(pkmSelect);
+    }
+
+    printf("%s\n",pkm->nickname().c_str());
+    printf("EVs:\n");
+    printf("  HP:    %i\n",pkm->ev(pksm::Stat::HP));
+    printf("  ATK:   %i\n",pkm->ev(pksm::Stat::ATK));
+    printf("  SPATK: %i\n",pkm->ev(pksm::Stat::SPATK));
+    printf("  DEF:   %i\n",pkm->ev(pksm::Stat::DEF));
+    printf("  SPDEF: %i\n",pkm->ev(pksm::Stat::SPDEF));
+    printf("  SPD:   %i\n",pkm->ev(pksm::Stat::SPD));
+    printf("Highlight an EV and use the left and right buttons to decrease/increase.");
 }
 
 void showAccountSelection(AccountUid *uids, s32 total, int& selection) {
@@ -287,6 +307,11 @@ int main(int argc, char* argv[])
             case PAGE_DETAILS:
                 page = PAGE_PKMLIST;
                 pkmList(save,boxSelect,pkmSelect);
+                break;
+
+            case PAGE_PKMLIST:
+                page = PAGE_PKM;
+                pkmDetails(save,boxSelect,pkmSelect);
                 break;
 
             default:

@@ -37,13 +37,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   of a homebrew executable (.nro). This is intended to be used for sysmodules.
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
-TARGET		:=	SVEdit
+TARGET		:=	PKSMNX
 BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
 #ROMFS		:=	resources
-APP_TITLE	:=	SVEdit
+APP_TITLE	:=	PKSMNX
 APP_AUTHOR	:=	biDev
 APP_VERSION	:=	0.0.1
 
