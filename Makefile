@@ -47,7 +47,7 @@ APP_TITLE	:=	PKSMNX
 APP_AUTHOR	:=	biDev
 APP_VERSION	:=	0.0.1
 
-SVEDIT_PATH	:=	.
+
 BOREALIS_PATH := $(TOPDIR)/borealis
 
 #---------------------------------------------------------------------------------

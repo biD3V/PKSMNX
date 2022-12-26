@@ -18,6 +18,9 @@
 #include <pkx/PK9.hpp>
 #include <utils/i18n.hpp>
 
+#include <borealis.hpp>
+#include "mainView.h"
+
 struct Game {
     std::string name;
     u64 titleID;
@@ -191,147 +194,162 @@ void showAccountSelection(AccountUid *uids, s32 total, int& selection) {
 // Main program entrypoint
 int main(int argc, char* argv[])
 {
-    // This example uses a text console, as a simple way to output text to the screen.
-    // If you want to write a software-rendered graphics application,
-    //   take a look at the graphics/simplegfx example, which uses the libnx Framebuffer API instead.
-    // If on the other hand you want to write an OpenGL based application,
-    //   take a look at the graphics/opengl set of examples, which uses EGL instead.
-    consoleInit(NULL);
+    // // This example uses a text console, as a simple way to output text to the screen.
+    // // If you want to write a software-rendered graphics application,
+    // //   take a look at the graphics/simplegfx example, which uses the libnx Framebuffer API instead.
+    // // If on the other hand you want to write an OpenGL based application,
+    // //   take a look at the graphics/opengl set of examples, which uses EGL instead.
+    // consoleInit(NULL);
 
-    // Configure our supported input layout: a single player with standard controller styles
-    padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+    // // Configure our supported input layout: a single player with standard controller styles
+    // padConfigureInput(1, HidNpadStyleSet_NpadStandard);
 
-    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
-    PadState pad;
-    padInitializeDefault(&pad);
+    // // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
+    // PadState pad;
+    // padInitializeDefault(&pad);
 
-    int selection = 0;
-    int saveSelec = 0;
-    int boxSelect = 0;
-    int pkmSelect = 0;
+    // int selection = 0;
+    // int saveSelec = 0;
+    // int boxSelect = 0;
+    // int pkmSelect = 0;
 
     accountInitialize(AccountServiceType_Administrator);
-    AccountUid *uids = new AccountUid[ACC_USER_LIST_SIZE];
-    s32 uidCount;
-    accountListAllUsers(uids,ACC_USER_LIST_SIZE,&uidCount);
+    // AccountUid *uids = new AccountUid[ACC_USER_LIST_SIZE];
+    // s32 uidCount;
+    // accountListAllUsers(uids,ACC_USER_LIST_SIZE,&uidCount);
     
-    enum PAGE page = PAGE_ACCOUNTS;
-    showAccountSelection(uids,uidCount,selection);
+    // enum PAGE page = PAGE_ACCOUNTS;
+    // showAccountSelection(uids,uidCount,selection);
 
-    std::vector<Game> availableGames;
-    std::shared_ptr<pksm::Sav> save;
+    // std::vector<Game> availableGames;
+    // std::shared_ptr<pksm::Sav> save;
 
-    // Main loop
-    while (appletMainLoop())
-    {
-        // Scan the gamepad. This should be done once for each frame
-        padUpdate(&pad);
-
-        // padGetButtonsDown returns the set of buttons that have been
-        // newly pressed in this frame compared to the previous one
-        u64 kDown = padGetButtonsDown(&pad);
-
-        if (kDown & HidNpadButton_Plus)
-            break; // break in order to return to hbmenu
-
-        if (kDown & HidNpadButton_AnyDown) {
-            switch (page)
-            {
-            case PAGE_ACCOUNTS:
-                selection++;
-                showAccountSelection(uids,uidCount,selection);
-                break;
-            
-            case PAGE_SAVES:
-                saveSelec++;
-                saveSelection(availableGames,saveSelec,uids[selection]);
-                break;
-
-            case PAGE_DETAILS:
-                boxSelect++;
-                saveOverview(&save,boxSelect);
-                break;
-
-            case PAGE_PKMLIST:
-                pkmSelect++;
-                pkmList(save,boxSelect,pkmSelect);
-                break;
-
-            default:
-                break;
-            }
-        }
-
-        if (kDown & HidNpadButton_AnyUp) {
-            switch (page)
-            {
-            case PAGE_ACCOUNTS:
-                selection+=-1;
-                showAccountSelection(uids,uidCount,selection);
-                break;
-            
-            case PAGE_SAVES:
-                saveSelec+=-1;
-                saveSelection(availableGames,saveSelec,uids[selection]);
-            
-            case PAGE_DETAILS:
-                boxSelect+=-1;
-                saveOverview(&save,boxSelect);
-                break;
-
-            case PAGE_PKMLIST:
-                pkmSelect+=-1;
-                pkmList(save,boxSelect,pkmSelect);
-                break;
-
-            default:
-                break;
-            }
-        }
-
-        if (kDown & HidNpadButton_A) {
-            switch (page)
-            {
-            case PAGE_ACCOUNTS:
-                page = PAGE_SAVES;
-                loadSaves(uids[selection],&availableGames);
-                saveSelection(availableGames,saveSelec,uids[selection]);
-                break;
-            
-            case PAGE_SAVES:
-                page = PAGE_DETAILS;
-                loadSave(availableGames[saveSelec],uids[selection],&save);
-                saveOverview(&save,boxSelect);
-                break;
-
-            case PAGE_DETAILS:
-                page = PAGE_PKMLIST;
-                pkmList(save,boxSelect,pkmSelect);
-                break;
-
-            case PAGE_PKMLIST:
-                page = PAGE_PKM;
-                pkmDetails(save,boxSelect,pkmSelect);
-                break;
-
-            default:
-                showAccountSelection(uids,uidCount,selection);
-                break;
-            }
-        }
-
-        if (kDown & HidNpadButton_B) {
-            page = PAGE_ACCOUNTS;
-            showAccountSelection(uids,uidCount,selection);
-        }
-
-        // Your code goes here
-
-        // Update the console, sending a new frame to the display
-        consoleUpdate(NULL);
+    if (!brls::Application::init()) {
+        return EXIT_FAILURE;
     }
 
-    // Deinitialize and clean up resources used by the console (important!)
-    consoleExit(NULL);
-    return 0;
+    MainView *mainView = new MainView();
+
+    brls::Application::pushView(mainView);
+
+    while (brls::Application::mainLoop());
+
+    return EXIT_SUCCESS;
+    
+
+    // Main loop
+
+
+    // while (appletMainLoop())
+    // {
+    //     // Scan the gamepad. This should be done once for each frame
+    //     padUpdate(&pad);
+
+    //     // padGetButtonsDown returns the set of buttons that have been
+    //     // newly pressed in this frame compared to the previous one
+    //     u64 kDown = padGetButtonsDown(&pad);
+
+    //     if (kDown & HidNpadButton_Plus)
+    //         break; // break in order to return to hbmenu
+
+    //     if (kDown & HidNpadButton_AnyDown) {
+    //         switch (page)
+    //         {
+    //         case PAGE_ACCOUNTS:
+    //             selection++;
+    //             showAccountSelection(uids,uidCount,selection);
+    //             break;
+            
+    //         case PAGE_SAVES:
+    //             saveSelec++;
+    //             saveSelection(availableGames,saveSelec,uids[selection]);
+    //             break;
+
+    //         case PAGE_DETAILS:
+    //             boxSelect++;
+    //             saveOverview(&save,boxSelect);
+    //             break;
+
+    //         case PAGE_PKMLIST:
+    //             pkmSelect++;
+    //             pkmList(save,boxSelect,pkmSelect);
+    //             break;
+
+    //         default:
+    //             break;
+    //         }
+    //     }
+
+    //     if (kDown & HidNpadButton_AnyUp) {
+    //         switch (page)
+    //         {
+    //         case PAGE_ACCOUNTS:
+    //             selection+=-1;
+    //             showAccountSelection(uids,uidCount,selection);
+    //             break;
+            
+    //         case PAGE_SAVES:
+    //             saveSelec+=-1;
+    //             saveSelection(availableGames,saveSelec,uids[selection]);
+            
+    //         case PAGE_DETAILS:
+    //             boxSelect+=-1;
+    //             saveOverview(&save,boxSelect);
+    //             break;
+
+    //         case PAGE_PKMLIST:
+    //             pkmSelect+=-1;
+    //             pkmList(save,boxSelect,pkmSelect);
+    //             break;
+
+    //         default:
+    //             break;
+    //         }
+    //     }
+
+    //     if (kDown & HidNpadButton_A) {
+    //         switch (page)
+    //         {
+    //         case PAGE_ACCOUNTS:
+    //             page = PAGE_SAVES;
+    //             loadSaves(uids[selection],&availableGames);
+    //             saveSelection(availableGames,saveSelec,uids[selection]);
+    //             break;
+            
+    //         case PAGE_SAVES:
+    //             page = PAGE_DETAILS;
+    //             loadSave(availableGames[saveSelec],uids[selection],&save);
+    //             saveOverview(&save,boxSelect);
+    //             break;
+
+    //         case PAGE_DETAILS:
+    //             page = PAGE_PKMLIST;
+    //             pkmList(save,boxSelect,pkmSelect);
+    //             break;
+
+    //         case PAGE_PKMLIST:
+    //             page = PAGE_PKM;
+    //             pkmDetails(save,boxSelect,pkmSelect);
+    //             break;
+
+    //         default:
+    //             showAccountSelection(uids,uidCount,selection);
+    //             break;
+    //         }
+    //     }
+
+    //     if (kDown & HidNpadButton_B) {
+    //         page = PAGE_ACCOUNTS;
+    //         showAccountSelection(uids,uidCount,selection);
+    //     }
+
+    //     // Your code goes here
+
+    //     // Update the console, sending a new frame to the display
+    //     consoleUpdate(NULL);
+    // }
+
+    // // Deinitialize and clean up resources used by the console (important!)
+    // consoleExit(NULL);
+    // return 0;
 }
