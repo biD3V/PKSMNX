@@ -27,6 +27,8 @@ enum PAGE {
     PAGE_ACCOUNTS,
     PAGE_SAVES,
     PAGE_DETAILS,
+    PAGE_PKMLIST,
+    PAGE_BOXES,
 };
 
 void loadSaves(AccountUid uid, std::vector<Game> *availableGames) {
@@ -46,7 +48,7 @@ void loadSaves(AccountUid uid, std::vector<Game> *availableGames) {
     }
 }
 
-void saveSelection(std::vector<Game> games, int selection, AccountUid uid) {
+void saveSelection(std::vector<Game> games, int& selection, AccountUid uid) {
     consoleClear();
 
     selection = selection % games.size();
@@ -111,7 +113,7 @@ void loadSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> *save) {
     }
 }
 
-void saveOverview(std::shared_ptr<pksm::Sav> *save, int selection) {
+void saveOverview(std::shared_ptr<pksm::Sav> *save, int& selection) {
     consoleClear();
 
     selection = selection % 2;
@@ -135,7 +137,24 @@ void saveOverview(std::shared_ptr<pksm::Sav> *save, int selection) {
     }
 }
 
-void showAccountSelection(AccountUid *uids, s32 total, int selection) {
+void pkmList(std::shared_ptr<pksm::Sav>& save,int bxSelect, int& selection) {
+    consoleClear();
+
+    if (bxSelect == 0)
+    {
+        for (size_t i = 0; i < save->partyCount(); i++)
+        {
+            selection = selection % save->partyCount();
+            if (selection == i) printf("> ");
+            else printf("  ");
+            printf("%s\n",save->pkm(i)->nickname().c_str());
+        }
+        
+    }
+    
+}
+
+void showAccountSelection(AccountUid *uids, s32 total, int& selection) {
     consoleClear();
 
     selection = selection % total;
@@ -169,6 +188,7 @@ int main(int argc, char* argv[])
     int selection = 0;
     int saveSelec = 0;
     int boxSelect = 0;
+    int pkmSelect = 0;
 
     accountInitialize(AccountServiceType_Administrator);
     AccountUid *uids = new AccountUid[ACC_USER_LIST_SIZE];
@@ -212,6 +232,11 @@ int main(int argc, char* argv[])
                 saveOverview(&save,boxSelect);
                 break;
 
+            case PAGE_PKMLIST:
+                pkmSelect++;
+                pkmList(save,boxSelect,pkmSelect);
+                break;
+
             default:
                 break;
             }
@@ -234,6 +259,11 @@ int main(int argc, char* argv[])
                 saveOverview(&save,boxSelect);
                 break;
 
+            case PAGE_PKMLIST:
+                pkmSelect+=-1;
+                pkmList(save,boxSelect,pkmSelect);
+                break;
+
             default:
                 break;
             }
@@ -252,6 +282,11 @@ int main(int argc, char* argv[])
                 page = PAGE_DETAILS;
                 loadSave(availableGames[saveSelec],uids[selection],&save);
                 saveOverview(&save,boxSelect);
+                break;
+
+            case PAGE_DETAILS:
+                page = PAGE_PKMLIST;
+                pkmList(save,boxSelect,pkmSelect);
                 break;
 
             default:
