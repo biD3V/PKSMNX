@@ -6,8 +6,3 @@ MainView::MainView() : TabFrame()
 
     this->addTab("Profiles", tab);
 }
-
-MainView::~MainView()
-{
-    
-}
