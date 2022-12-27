@@ -3,4 +3,4 @@
 	url = https://github.com/biD3V/PKSM-Core.git
 [submodule "borealis"]
 	path = borealis
-	url = https://github.com/EmreTech/borealis.git
+	url = https://github.com/biD3V/borealis.git
