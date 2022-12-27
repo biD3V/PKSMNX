@@ -13,10 +13,10 @@
 #include <iostream>
 #include <fstream>
 
-#include <sav/Sav.hpp>
-#include <pkx/PKX.hpp>
-#include <pkx/PK9.hpp>
-#include <utils/i18n.hpp>
+// #include <sav/Sav.hpp>
+// #include <pkx/PKX.hpp>
+// #include <pkx/PK9.hpp>
+// #include <utils/i18n.hpp>
 
 #include <borealis.hpp>
 #include "mainView.h"
@@ -35,161 +35,161 @@ enum PAGE {
     PAGE_PKM,
 };
 
-void loadSaves(AccountUid uid, std::vector<Game> *availableGames) {
-    consoleClear();
-    availableGames->clear();
+// void loadSaves(AccountUid uid, std::vector<Game> *availableGames) {
+//     consoleClear();
+//     availableGames->clear();
 
-    struct Game games[] = {
-        {"Sword",0x0100ABF008968000},
-        {"Shield",0x01008DB008C2C000},
-        {"Scarlet",0x0100A3D008C5C000},
-        {"Violet",0x01008F6008C5E000}
-    };
+//     struct Game games[] = {
+//         {"Sword",0x0100ABF008968000},
+//         {"Shield",0x01008DB008C2C000},
+//         {"Scarlet",0x0100A3D008C5C000},
+//         {"Violet",0x01008F6008C5E000}
+//     };
 
-    for (Game game : games) {
-        if (R_SUCCEEDED(fsdevMountSaveData(game.name.c_str(),game.titleID,uid))) availableGames->push_back(game);
-        fsdevUnmountDevice(game.name.c_str());
-    }
-}
+//     for (Game game : games) {
+//         if (R_SUCCEEDED(fsdevMountSaveData(game.name.c_str(),game.titleID,uid))) availableGames->push_back(game);
+//         fsdevUnmountDevice(game.name.c_str());
+//     }
+// }
 
-void saveSelection(std::vector<Game> games, int& selection, AccountUid uid) {
-    consoleClear();
+// void saveSelection(std::vector<Game> games, int& selection, AccountUid uid) {
+//     consoleClear();
 
-    selection = selection % games.size();
+//     selection = selection % games.size();
 
-    for (size_t i = 0; i < games.size(); i++)
-    {
-        if (i == selection) printf("> ");
-        else printf("  ");
-        printf("%s\n",games[i].name.c_str());
-    }
-}
+//     for (size_t i = 0; i < games.size(); i++)
+//     {
+//         if (i == selection) printf("> ");
+//         else printf("  ");
+//         printf("%s\n",games[i].name.c_str());
+//     }
+// }
 
-void loadSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> *save) {
+// void loadSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> *save) {
     
-    Result rc = 0;
+//     Result rc = 0;
 
-    //You can use any device-name. If you want multiple saves mounted at the same time, you must use different device-names for each one.
-    if (R_SUCCEEDED(rc)) {
-        rc = fsdevMountSaveData("save", game.titleID, uid);//See also libnx fs.h/fs_dev.h
-        if (R_FAILED(rc)) {
-            printf("fsdevMountSaveData() failed: 0x%x\n", rc);
-        }
-    }
+//     //You can use any device-name. If you want multiple saves mounted at the same time, you must use different device-names for each one.
+//     if (R_SUCCEEDED(rc)) {
+//         rc = fsdevMountSaveData("save", game.titleID, uid);//See also libnx fs.h/fs_dev.h
+//         if (R_FAILED(rc)) {
+//             printf("fsdevMountSaveData() failed: 0x%x\n", rc);
+//         }
+//     }
 
-    //At this point you can use the mounted device with standard stdio.
-    //After modifying savedata, in order for the changes to take affect you must use: rc = fsdevCommitDevice("save");
-    //See also libnx fs_dev.h for fsdevCommitDevice.
+//     //At this point you can use the mounted device with standard stdio.
+//     //After modifying savedata, in order for the changes to take affect you must use: rc = fsdevCommitDevice("save");
+//     //See also libnx fs_dev.h for fsdevCommitDevice.
 
-    if (R_SUCCEEDED(rc)) {
-        FILE* saveFile = fopen("save:/main","rb");
-        u32 size;
-        std::shared_ptr<u8[]> saveData = nullptr;
+//     if (R_SUCCEEDED(rc)) {
+//         FILE* saveFile = fopen("save:/main","rb");
+//         u32 size;
+//         std::shared_ptr<u8[]> saveData = nullptr;
 
-        if (saveFile) {
-            fseek(saveFile,0,SEEK_END);
-            size = ftell(saveFile);
-            rewind(saveFile);
+//         if (saveFile) {
+//             fseek(saveFile,0,SEEK_END);
+//             size = ftell(saveFile);
+//             rewind(saveFile);
 
-            if (size > 0x319DC3) {
-                printf("Save too big: 0x%x\n", size);
-                fclose(saveFile);
-            } else {
-                saveData = std::shared_ptr<u8[]>(new u8[size]);
-                fread(saveData.get(), 1, size, saveFile);
-                fclose(saveFile);
+//             if (size > 0x319DC3) {
+//                 printf("Save too big: 0x%x\n", size);
+//                 fclose(saveFile);
+//             } else {
+//                 saveData = std::shared_ptr<u8[]>(new u8[size]);
+//                 fread(saveData.get(), 1, size, saveFile);
+//                 fclose(saveFile);
 
-                *save = pksm::Sav::getSave(saveData, size);
+//                 *save = pksm::Sav::getSave(saveData, size);
 
-                if (save) {
-                    printf("save loaded");
-                } else {
-                    printf("save wrong");
-                }
-            }
-        } else {
-            printf("Could not open file");
-        }
+//                 if (save) {
+//                     printf("save loaded");
+//                 } else {
+//                     printf("save wrong");
+//                 }
+//             }
+//         } else {
+//             printf("Could not open file");
+//         }
 
-        //When you are done with savedata, you can use the below.
-        //Any devices still mounted at app exit are automatically unmounted.
-        fsdevUnmountDevice("save");
-    }
-}
+//         //When you are done with savedata, you can use the below.
+//         //Any devices still mounted at app exit are automatically unmounted.
+//         fsdevUnmountDevice("save");
+//     }
+// }
 
-void saveOverview(std::shared_ptr<pksm::Sav> *save, int& selection) {
-    consoleClear();
+// void saveOverview(std::shared_ptr<pksm::Sav> *save, int& selection) {
+//     consoleClear();
 
-    selection = selection % 2;
+//     selection = selection % 2;
 
-    if (save) {
-        printf("Trainer name: %s\n", save->get()->otName().c_str());
-        printf("Play Time: %i:%i:%i\n", save->get()->playedHours(), save->get()->playedMinutes(), save->get()->playedSeconds());
-        printf("Money: %i\n",save->get()->money());
-        printf("BP: %i\n",save->get()->BP());
-        if (selection == 0) printf("> Party\n  Boxes");
-        else printf("  Party\n> Boxes");
+//     if (save) {
+//         printf("Trainer name: %s\n", save->get()->otName().c_str());
+//         printf("Play Time: %i:%i:%i\n", save->get()->playedHours(), save->get()->playedMinutes(), save->get()->playedSeconds());
+//         printf("Money: %i\n",save->get()->money());
+//         printf("BP: %i\n",save->get()->BP());
+//         if (selection == 0) printf("> Party\n  Boxes");
+//         else printf("  Party\n> Boxes");
         
-        // printf("Party:\n");
-        // for (size_t i = 0; i < save->partyCount(); i++)
-        // {
-        //     std::shared_ptr<pksm::PKX> pkm = save.get()->pkm(i);
-        //     printf("    %s\n", pkm->nickname().c_str());
-        //     printf("        EVs:\n");
-        //     printf("            HP: %i  ATK: %i  SPATK: %i  DEF: %i  SPDEF: %i  SPD: %i\n",pkm->ev(pksm::Stat::HP),pkm->ev(pksm::Stat::ATK),pkm->ev(pksm::Stat::SPATK),pkm->ev(pksm::Stat::DEF),pkm->ev(pksm::Stat::SPDEF),pkm->ev(pksm::Stat::SPD));
-        // }
-    }
-}
+//         // printf("Party:\n");
+//         // for (size_t i = 0; i < save->partyCount(); i++)
+//         // {
+//         //     std::shared_ptr<pksm::PKX> pkm = save.get()->pkm(i);
+//         //     printf("    %s\n", pkm->nickname().c_str());
+//         //     printf("        EVs:\n");
+//         //     printf("            HP: %i  ATK: %i  SPATK: %i  DEF: %i  SPDEF: %i  SPD: %i\n",pkm->ev(pksm::Stat::HP),pkm->ev(pksm::Stat::ATK),pkm->ev(pksm::Stat::SPATK),pkm->ev(pksm::Stat::DEF),pkm->ev(pksm::Stat::SPDEF),pkm->ev(pksm::Stat::SPD));
+//         // }
+//     }
+// }
 
-void pkmList(std::shared_ptr<pksm::Sav>& save,int bxSelect, int& selection) {
-    consoleClear();
+// void pkmList(std::shared_ptr<pksm::Sav>& save,int bxSelect, int& selection) {
+//     consoleClear();
 
-    if (bxSelect == 0)
-    {
-        for (size_t i = 0; i < save->partyCount(); i++)
-        {
-            selection = selection % save->partyCount();
-            if (selection == i) printf("> ");
-            else printf("  ");
-            printf("%s\n",save->pkm(i)->nickname().c_str());
-        }
+//     if (bxSelect == 0)
+//     {
+//         for (size_t i = 0; i < save->partyCount(); i++)
+//         {
+//             selection = selection % save->partyCount();
+//             if (selection == i) printf("> ");
+//             else printf("  ");
+//             printf("%s\n",save->pkm(i)->nickname().c_str());
+//         }
         
-    }
+//     }
     
-}
+// }
 
-void pkmDetails(std::shared_ptr<pksm::Sav>& save,int boxSelect,int pkmSelect) {
-    consoleClear();
-    std::shared_ptr<pksm::PKX> pkm;
+// void pkmDetails(std::shared_ptr<pksm::Sav>& save,int boxSelect,int pkmSelect) {
+//     consoleClear();
+//     std::shared_ptr<pksm::PKX> pkm;
 
-    if (boxSelect == 0) {
-        pkm = save->pkm(pkmSelect);
-    }
+//     if (boxSelect == 0) {
+//         pkm = save->pkm(pkmSelect);
+//     }
 
-    printf("%s\n",pkm->nickname().c_str());
-    printf("EVs:\n");
-    printf("  HP:    %i\n",pkm->ev(pksm::Stat::HP));
-    printf("  ATK:   %i\n",pkm->ev(pksm::Stat::ATK));
-    printf("  SPATK: %i\n",pkm->ev(pksm::Stat::SPATK));
-    printf("  DEF:   %i\n",pkm->ev(pksm::Stat::DEF));
-    printf("  SPDEF: %i\n",pkm->ev(pksm::Stat::SPDEF));
-    printf("  SPD:   %i\n",pkm->ev(pksm::Stat::SPD));
-    printf("Highlight an EV and use the left and right buttons to decrease/increase.");
-}
+//     printf("%s\n",pkm->nickname().c_str());
+//     printf("EVs:\n");
+//     printf("  HP:    %i\n",pkm->ev(pksm::Stat::HP));
+//     printf("  ATK:   %i\n",pkm->ev(pksm::Stat::ATK));
+//     printf("  SPATK: %i\n",pkm->ev(pksm::Stat::SPATK));
+//     printf("  DEF:   %i\n",pkm->ev(pksm::Stat::DEF));
+//     printf("  SPDEF: %i\n",pkm->ev(pksm::Stat::SPDEF));
+//     printf("  SPD:   %i\n",pkm->ev(pksm::Stat::SPD));
+//     printf("Highlight an EV and use the left and right buttons to decrease/increase.");
+// }
 
-void showAccountSelection(AccountUid *uids, s32 total, int& selection) {
-    consoleClear();
+// void showAccountSelection(AccountUid *uids, s32 total, int& selection) {
+//     consoleClear();
 
-    selection = selection % total;
+//     selection = selection % total;
 
-    for (size_t i = 0; i < total; i++)
-    {
-        if (selection == i) printf("> ");
-        else printf("  ");
-        printf("User %li    0x%lx 0x%lx\n",i + 1,uids[i].uid[0],uids[i].uid[1]);
-    }
+//     for (size_t i = 0; i < total; i++)
+//     {
+//         if (selection == i) printf("> ");
+//         else printf("  ");
+//         printf("User %li    0x%lx 0x%lx\n",i + 1,uids[i].uid[0],uids[i].uid[1]);
+//     }
     
-}
+// }
 
 // Main program entrypoint
 int main(int argc, char* argv[])
