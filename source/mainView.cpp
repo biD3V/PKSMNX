@@ -1,4 +1,4 @@
-#include "mainView.h"
+#include "mainView.hpp"
 
 MainView::MainView() : AppletFrame(true,true)
 {

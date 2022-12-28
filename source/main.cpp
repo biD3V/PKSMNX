@@ -25,8 +25,7 @@
 #include <borealis.hpp>
 #include <string>
 
-#include "profilesTab.hpp"
-#include "mainView.h"
+#include "mainView.hpp"
 
 namespace i18n = brls::i18n; // for loadTranslations() and getStr()
 using namespace i18n::literals; // for _i18n
@@ -45,21 +44,13 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Create a sample view
-    // brls::TabFrame* rootFrame = new brls::TabFrame();
-    // rootFrame->setTitle("main/name"_i18n);
-    // rootFrame->setIcon(BOREALIS_ASSET("icon/borealis.jpg"));
-
-    // rootFrame->addTab("Profiles", new ProfilesTab());
-
-    // Add the root view to the stack
-    //brls::Application::pushView(rootFrame);
     brls::Application::pushView(new MainView());
 
     // Run the app
     while (brls::Application::mainLoop())
         ;
 
+    
     // Exit
     return EXIT_SUCCESS;
 }
