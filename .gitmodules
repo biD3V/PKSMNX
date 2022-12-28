@@ -4,3 +4,4 @@
 [submodule "borealis"]
 	path = borealis
 	url = https://github.com/biD3V/borealis.git
+	branch = legacy
