@@ -51,3 +51,55 @@ std::string util::safeString(const std::string& s)
 
     return ret;
 }
+
+Result util::loadSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> *save) {
+    
+    Result rc = 0;
+
+    //You can use any device-name. If you want multiple saves mounted at the same time, you must use different device-names for each one.
+    rc = fsdevMountSaveData("save", game.titleID, uid);//See also libnx fs.h/fs_dev.h
+    if (R_FAILED(rc)) {
+        printf("fsdevMountSaveData() failed: 0x%x\n", rc);
+    }
+
+    //At this point you can use the mounted device with standard stdio.
+    //After modifying savedata, in order for the changes to take affect you must use: rc = fsdevCommitDevice("save");
+    //See also libnx fs_dev.h for fsdevCommitDevice.
+
+    if (R_SUCCEEDED(rc)) {
+        FILE* saveFile = fopen("save:/main","rb");
+        u32 size;
+        std::shared_ptr<u8[]> saveData = nullptr;
+
+        if (saveFile) {
+            fseek(saveFile,0,SEEK_END);
+            size = ftell(saveFile);
+            rewind(saveFile);
+
+            if (size > 0x319DC3) {
+                printf("Save too big: 0x%x\n", size);
+                fclose(saveFile);
+            } else {
+                saveData = std::shared_ptr<u8[]>(new u8[size]);
+                fread(saveData.get(), 1, size, saveFile);
+                fclose(saveFile);
+
+                *save = pksm::Sav::getSave(saveData, size);
+
+                if (save) {
+                    printf("save loaded");
+                } else {
+                    printf("save wrong");
+                }
+            }
+        } else {
+            printf("Could not open file");
+        }
+
+        //When you are done with savedata, you can use the below.
+        //Any devices still mounted at app exit are automatically unmounted.
+        fsdevUnmountDevice("save");
+    }
+
+    return rc;
+}

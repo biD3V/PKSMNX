@@ -3,7 +3,7 @@
 #include <borealis.hpp>
 #include "profilesTab.hpp"
 
-class MainView : public brls::TabFrame
+class MainView : public brls::AppletFrame
 {
     public:
         MainView();

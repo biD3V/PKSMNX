@@ -1,8 +1,14 @@
 #include "SavesList.hpp"
+#include <fmt/format.h>
+#include "SaveDetailView.hpp"
 
-SavesList::SavesList(AccountUid uid) {
+SavesList::SavesList(AccountUid uid) : AppletFrame(true,true)
+{
     this->accUID = uid;
+    this->setTitle("Saves");
+
     availableGames.clear();
+    list = new brls::List();
 
     struct Game games[] = {
         {"Sword",0x0100ABF008968000},
@@ -16,8 +22,17 @@ SavesList::SavesList(AccountUid uid) {
         fsdevUnmountDevice(game.name.c_str());
     }
 
-    for (Game game : availableGames) {
-        brls::ListItem *gameItem = new brls::ListItem(game.name,std::to_string(game.titleID));
-        this->addView(gameItem);
+    if (availableGames.size() > 0) {
+        for (Game game : availableGames) {
+            brls::ListItem *gameItem = new brls::ListItem(game.name,"",fmt::format("{:#x}",game.titleID));
+            gameItem->getClickEvent()->subscribe([game,uid](brls::View *view){
+                brls::Application::pushView(new SaveDetailView(uid,game));
+            });
+            list->addView(gameItem);
+        }
+    } else {
+        noSaves = new brls::Label(brls::LabelStyle::REGULAR, "No matching saves. Did you select the correct user?");
+        list->addView(noSaves);
     }
+    this->setContentView(list);
 }

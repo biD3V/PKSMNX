@@ -26,6 +26,7 @@
 #include <string>
 
 #include "profilesTab.hpp"
+#include "mainView.h"
 
 namespace i18n = brls::i18n; // for loadTranslations() and getStr()
 using namespace i18n::literals; // for _i18n
@@ -38,7 +39,7 @@ int main(int argc, char* argv[])
     accountInitialize(AccountServiceType_Administrator);
 
     i18n::loadTranslations();
-    if (!brls::Application::init("main/name"_i18n))
+    if (!brls::Application::init("PKSMNX"))
     {
         brls::Logger::error("Unable to init Borealis application");
         return EXIT_FAILURE;
@@ -53,7 +54,7 @@ int main(int argc, char* argv[])
 
     // Add the root view to the stack
     //brls::Application::pushView(rootFrame);
-    brls::Application::pushView(new ProfilesTab());
+    brls::Application::pushView(new MainView());
 
     // Run the app
     while (brls::Application::mainLoop())

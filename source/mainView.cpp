@@ -1,8 +1,10 @@
 #include "mainView.h"
 
-MainView::MainView() : TabFrame()
+MainView::MainView() : AppletFrame(true,true)
 {
+    this->setTitle("PKSMNX");
+    
     ProfilesTab *tab = new ProfilesTab();
 
-    this->addTab("Profiles", tab);
+    this->setContentView(tab);
 }
