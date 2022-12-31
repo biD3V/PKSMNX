@@ -1,5 +1,5 @@
 #ifndef _PKSMCORE_LANG_FOLDER
-#define _PKSMCORE_LANG_FOLDER "romfs:/i18n/"
+#define _PKSMCORE_LANG_FOLDER "romfs:/strings/"
 #endif
 
 #ifndef _PKSMCORE_GETLINE_FUNC
