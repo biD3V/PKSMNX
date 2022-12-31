@@ -29,16 +29,6 @@ SavesList::SavesList(AccountUid uid) : AppletFrame(true,true)
             brls::ListItem *gameItem = new brls::ListItem(game.name,"",fmt::format("{:#x}",game.titleID));
             gameItem->getClickEvent()->subscribe([game,uid](brls::View *view){
                 SaveDetailView *detailView = new SaveDetailView(uid,game);
-                detailView->registerAction("Save", brls::Key::MINUS, [detailView]() {
-                    Result rc = util::writeSave(detailView->game,detailView->uid,detailView->save);
-                    if (R_FAILED(rc)) {
-                        brls::Application::notify("Save Failed!");
-                    } else {
-                        brls::Application::notify("Saved.");
-                        detailView->hasChanges = false;
-                    }
-                    return true;
-                });
                 brls::Application::pushView(detailView);
             });
             list->addView(gameItem);

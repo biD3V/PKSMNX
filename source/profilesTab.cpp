@@ -46,4 +46,11 @@ ProfilesTab::ProfilesTab()
         this->addView(profileItem);
     }
 
+    // Result romfsRC = romfsInit();
+    // if (R_SUCCEEDED(romfsRC)) {
+    //     this->addView(new brls::ListItemGroupSpacing(true));
+
+    //     brls::List *romfsList = new brls::List();
+    //     re
+    // }
 }

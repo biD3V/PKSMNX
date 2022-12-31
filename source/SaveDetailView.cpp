@@ -21,7 +21,7 @@ SaveDetailView::SaveDetailView(AccountUid uid, Game game) : TabFrame()
         brls::List *party = new brls::List();
         for (u8 i = 0; i < this->save->partyCount(); i++)
         {
-            brls::ListItem *pkmItem = new brls::ListItem(this->save->pkm(i)->nickname());
+            brls::ListItem *pkmItem = new brls::ListItem(this->save->pkm(i)->nickname(),"",this->save->pkm(i)->species().localize(pksm::Language::ENG));
             pkmItem->getClickEvent()->subscribe([this,i](brls::View *view){
                 PKMInfoView *pkmInfo = new PKMInfoView(this->save,0,i,true,this->hasChanges);
                 brls::Application::pushView(pkmInfo);
@@ -29,6 +29,17 @@ SaveDetailView::SaveDetailView(AccountUid uid, Game game) : TabFrame()
             party->addView(pkmItem);
         }
         this->addTab("Party",party);
+
+        this->registerAction("Save", brls::Key::MINUS, [this]() {
+            Result rc = util::writeSave(this->game,this->uid,this->save);
+            if (R_FAILED(rc)) {
+                brls::Application::notify("Save Failed!");
+            } else {
+                brls::Application::notify("Saved.");
+                this->hasChanges = false;
+            }
+            return true;
+        });
     }
 }
 

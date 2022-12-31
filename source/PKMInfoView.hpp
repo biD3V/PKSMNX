@@ -7,6 +7,11 @@
 #include <switch.h>
 #include "Game.h"
 #include <sav/Sav.hpp>
+#include <pkx/PK9.hpp>
+
+#include <vector>
+#include <string>
+
 #include "util.hpp"
 
 #include "SaveDetailView.hpp"

@@ -13,15 +13,32 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
     this->isParty = party;
     this->setTitle(this->pkm->nickname());
     this->pkmEdited = false;
-    // this->pkm = pkm;
+
+    std::vector<std::string> typeStrings;
+    for (u8 i = 0; i < 18; i++)
+    {
+        typeStrings.push_back(static_cast<pksm::Type>(i).localize(pksm::Language::ENG));
+    }
+    
+
+    brls::List *personalList = new brls::List();
+    personalList->addView(new brls::ListItem(std::to_string(u16(this->pkm->species()))));
+    if (this->pkm->generation() == pksm::Generation::NINE) {
+        pksm::PKX& pkmBase = *this->pkm;
+        // pksm::PK9& pkm9 = static_cast<pksm::PK9&>(*this->pkm);
+        brls::SelectListItem *teraTypeOrig = new brls::SelectListItem("Original TeraType",typeStrings,u8(static_cast<pksm::PK9&>(pkmBase).teraTypeOriginal()));
+        brls::SelectListItem *teraTypeOver = new brls::SelectListItem("Override TeraType",typeStrings,u8(static_cast<pksm::PK9&>(pkmBase).teraTypeOverride()));
+        
+        personalList->addView(teraTypeOrig);
+        personalList->addView(teraTypeOver);
+        
+    }
+    this->addTab("Personal",personalList);
+
+    this->addSeparator();
 
     brls::List *evList = new brls::List();
-    // evList->addView(new brls::IntegerInputListItem("HP",pkm->ev(pksm::Stat::HP),"","",3));
-    // evList->addView(new brls::IntegerInputListItem("Attack",pkm->ev(pksm::Stat::ATK),"","",3));
-    // evList->addView(new brls::IntegerInputListItem("Special Attack",pkm->ev(pksm::Stat::SPATK),"","",3));
-    // evList->addView(new brls::IntegerInputListItem("Deffence",pkm->ev(pksm::Stat::DEF),"","",3));
-    // evList->addView(new brls::IntegerInputListItem("Special Deffence",pkm->ev(pksm::Stat::SPDEF),"","",3));
-    // evList->addView(new brls::IntegerInputListItem("Speed",pkm->ev(pksm::Stat::SPD),"","",3));
+    brls::List *ivList = new brls::List();
 
     for (u8 i = 0; i < 6; i++)
     {
@@ -58,7 +75,7 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
             break;
         }
 
-        brls::IntegerInputListItem *evInputItem = new brls::IntegerInputListItem(statName,this->pkm->ev(stat),"","",3);
+        brls::IntegerInputListItem *evInputItem = new brls::IntegerInputListItem(statName,this->pkm->ev(stat),"Enter a value between 0 a 252","",3);
         evInputItem->getClickEvent()->subscribe([this,evInputItem,stat,&save,&unsavedChanges](brls::View *v){
             u16 value = std::stoi(evInputItem->getValue());
 
@@ -82,11 +99,34 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
             }
         });
 
+        brls::IntegerInputListItem *ivInputItem = new brls::IntegerInputListItem(statName,this->pkm->iv(stat),"Enter a value between 0 and 31","",3);
+        ivInputItem->getClickEvent()->subscribe([this,ivInputItem,stat,&save,&unsavedChanges](brls::View *v){
+            u8 value = std::stoi(ivInputItem->getValue());
+
+            if (value > 31) {
+                ivInputItem->setValue(std::to_string(31));
+            } else if (value < 0) {
+                ivInputItem->setValue(std::to_string(0));
+            } else {
+                this->pkm->iv(stat,value);
+
+                if (this->isParty) {
+                    save->pkm(*this->pkm,this->slot);
+                } else {
+                    save->pkm(*this->pkm,this->box,this->slot,false);
+                }
+                
+                unsavedChanges = true;
+            }
+        });
+
+
         evList->addView(evInputItem);
+        ivList->addView(ivInputItem);
     }
     
-
     this->addTab("EVs",evList);
+    this->addTab("IVs",ivList);
 }
 
 // bool PKMInfoView::onCancel() {
