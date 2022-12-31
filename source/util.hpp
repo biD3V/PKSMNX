@@ -9,6 +9,8 @@
 
 #include <sav/Sav.hpp>
 
+#include <borealis.hpp>
+
 namespace util
 {
     inline bool isASCII(const uint32_t& t)
@@ -24,4 +26,5 @@ namespace util
     std::string safeString(const std::string& s);
 
     Result loadSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> *save);
+    Result writeSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> save);
 } // namespace util

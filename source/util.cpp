@@ -103,3 +103,39 @@ Result util::loadSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> *save
 
     return rc;
 }
+
+Result util::writeSave(Game game,AccountUid uid,std::shared_ptr<pksm::Sav> save) {
+    Result rc = 0;
+
+    rc = fsdevMountSaveData("save",game.titleID,uid);
+    if (R_FAILED(rc)) {
+        printf("fsdevMountSaveData() failed: 0x%x\n", rc);
+        brls::Logger::error("fsdevMountSaveData() failed: {:#x}\n",rc);
+    }
+
+    if (R_SUCCEEDED(rc)) {
+        FILE* saveFile = fopen("save:/main","wb");
+        // u32 size;
+        // std::shared_ptr<u8[]> saveData = nullptr;
+        
+        save->finishEditing();
+
+        u32 writeRet;
+        writeRet = fwrite(save->rawData().get(),1,save->getLength(),saveFile);
+        fclose(saveFile);
+
+        if (writeRet != save->getLength()) rc = 1;
+
+        save->beginEditing();
+
+        rc = fsdevCommitDevice("save");
+        if (R_FAILED(rc)) {
+            printf("fsdevCommitDevice() failed: 0x%x\n", rc);
+            brls::Logger::error("fsdevCommitDevice() failed: {:#x}\n",rc);
+        }
+    }
+
+    fsdevUnmountDevice("save");
+
+    return rc;
+}

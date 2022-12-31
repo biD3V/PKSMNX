@@ -33,7 +33,7 @@ using namespace i18n::literals; // for _i18n
 int main(int argc, char* argv[])
 {
     // Init the app
-    brls::Logger::setLogLevel(brls::LogLevel::DEBUG);
+    brls::Logger::setLogLevel(brls::LogLevel::ERROR);
 
     accountInitialize(AccountServiceType_Administrator);
 
