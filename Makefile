@@ -42,13 +42,15 @@ BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
-#ROMFS		:=	resources
 APP_TITLE	:=	PKSMNX
-APP_AUTHOR	:=	biDev
-APP_VERSION	:=	0.0.1
+APP_AUTHOR	:=	bidev
+APP_VERSION	:=	0.1.0
+ICON		:=	resources/icon/PKSMNX.jpg
+ROMFS		:=	resources
 
-SVEDIT_PATH	:=	.
-BOREALIS_PATH := $(TOPDIR)/borealis
+BOREALIS_PATH		:=	./borealis
+PKSM_PATH			:= 	./PKSM-Core
+BOREALIS_RESOURCES	:=	romfs:/
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -58,14 +60,15 @@ ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIE
 CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
-CFLAGS	+=	$(INCLUDE) -D__SWITCH__
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ \
+			-DBOREALIS_RESOURCES="\"$(BOREALIS_RESOURCES)\""
 
-CXXFLAGS	:= $(CFLAGS) -std=c++20 -fexceptions
+CXXFLAGS	:= $(CFLAGS) -std=c++20 -O2 -Wno-volatile
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-specs=$(DEVKITPRO)/libnx/switch.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lnx
+LIBS	:= -lnx -lm
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -73,6 +76,7 @@ LIBS	:= -lnx
 #---------------------------------------------------------------------------------
 LIBDIRS	:= $(PORTLIBS) $(LIBNX)
 
+include $(TOPDIR)/borealis/library/borealis.mk
 include $(TOPDIR)/PKSM-Core/PKSMCore.mk
 
 #---------------------------------------------------------------------------------
@@ -169,7 +173,7 @@ all: $(BUILD)
 
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@MSYS2_ARG_CONV_EXCL="-D;$(MSYS2_ARG_CONV_EXCL)" $(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
 #---------------------------------------------------------------------------------
 clean:
