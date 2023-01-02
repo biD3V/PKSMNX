@@ -44,7 +44,8 @@ DATA		:=	data
 INCLUDES	:=	include
 APP_TITLE	:=	PKSMNX
 APP_AUTHOR	:=	bidev
-APP_VERSION	:=	0.0.1
+APP_VERSION	:=	0.1.0
+ICON		:=	resources/icon/PKSMNX.jpg
 ROMFS		:=	resources
 
 BOREALIS_PATH		:=	./borealis
