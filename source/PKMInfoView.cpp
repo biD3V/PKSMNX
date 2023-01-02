@@ -15,22 +15,55 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
     this->pkmEdited = false;
 
     std::vector<std::string> typeStrings;
-    for (u8 i = 0; i < 18; i++)
-    {
+    for (u8 i = 0; i < 18; i++) {
         typeStrings.push_back(static_cast<pksm::Type>(i).localize(pksm::Language::ENG));
     }
-    
 
+    std::vector<std::string> natureStrings;
+    for (u8 i = 0; i < 25; i++) {
+        natureStrings.push_back(static_cast<pksm::Nature>(i).localize(pksm::Language::ENG));
+    }
+    
     brls::List *personalList = new brls::List();
-    personalList->addView(new brls::ListItem(std::to_string(u16(this->pkm->species()))));
+    personalList->addView(new brls::ListItem(this->pkm->species().localize(pksm::Language::ENG)));
+
+    brls::SelectListItem *nature = new brls::SelectListItem("Nature",natureStrings,u8(this->pkm->nature()));
+    nature->getValueSelectedEvent()->subscribe([this,nature,&save,&unsavedChanges](int i){
+        pksm::Nature selectedNature = static_cast<pksm::Nature>(i);
+        this->pkm->nature(selectedNature);
+        addChangesToSave(save);
+        unsavedChanges = true;
+    });
+    personalList->addView(nature);
+
+    std::vector<std::string> abilityStrings;
+    for (u8 i = 0; i < 3; i++) {
+        if (this->pkm->abilities(i) != pksm::Ability::None)
+            abilityStrings.push_back(this->pkm->abilities(i).localize(pksm::Language::ENG));
+    }
+
+    brls::SelectListItem *ability = new brls::SelectListItem("Ability",abilityStrings,getAbilityListNumber(this->pkm->abilityNumber() >> 1));
+    ability->getValueSelectedEvent()->subscribe([this,ability,&save,&unsavedChanges](int i){
+        int selectedAbility = i;
+        if (this->pkm->abilities(1) == pksm::Ability::None && i == 1) selectedAbility = 2;
+
+        this->pkm->setAbility(selectedAbility);
+        addChangesToSave(save);
+        unsavedChanges = true;
+    });
+    personalList->addView(ability);
+
     if (this->pkm->generation() == pksm::Generation::NINE) {
         pksm::PKX& pkmBase = *this->pkm;
         // pksm::PK9& pkm9 = static_cast<pksm::PK9&>(*this->pkm);
-        brls::SelectListItem *teraTypeOrig = new brls::SelectListItem("Original TeraType",typeStrings,u8(static_cast<pksm::PK9&>(pkmBase).teraTypeOriginal()));
-        brls::SelectListItem *teraTypeOver = new brls::SelectListItem("Override TeraType",typeStrings,u8(static_cast<pksm::PK9&>(pkmBase).teraTypeOverride()));
-        
-        personalList->addView(teraTypeOrig);
-        personalList->addView(teraTypeOver);
+        brls::SelectListItem *teraType = new brls::SelectListItem("Tera Type",typeStrings,u8(static_cast<pksm::PK9&>(pkmBase).getTeraType()));
+        teraType->getValueSelectedEvent()->subscribe([this,teraType,&save,&unsavedChanges](int i){
+            pksm::Type selectedType = static_cast<pksm::Type>(teraType->getSelectedValue());
+            static_cast<pksm::PK9&>(*this->pkm).setTeraType(selectedType);
+            addChangesToSave(save);
+            unsavedChanges = true;
+        });
+        personalList->addView(teraType);
         
     }
     this->addTab("Personal",personalList);
@@ -87,14 +120,7 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
                 evInputItem->setValue(std::to_string(this->pkm->ev(stat)));
             } else {
                 this->pkm->ev(stat,value);
-                // SaveDetailView *parentView = this->parent;
-                if (this->isParty) {
-                    save->pkm(*this->pkm,this->slot);
-                } else {
-                    save->pkm(*this->pkm,this->box,this->slot,false);
-                }
-                //save->fixParty();
-                this->pkmEdited = true;
+                addChangesToSave(save);
                 unsavedChanges = true;
             }
         });
@@ -109,13 +135,7 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
                 ivInputItem->setValue(std::to_string(0));
             } else {
                 this->pkm->iv(stat,value);
-
-                if (this->isParty) {
-                    save->pkm(*this->pkm,this->slot);
-                } else {
-                    save->pkm(*this->pkm,this->box,this->slot,false);
-                }
-                
+                addChangesToSave(save);
                 unsavedChanges = true;
             }
         });
@@ -129,38 +149,19 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
     this->addTab("IVs",ivList);
 }
 
-// bool PKMInfoView::onCancel() {
-//     if (this->pkmEdited)
-//     {
-//         brls::Dialog *dialog = new brls::Dialog("Would you like to save your changes?");
-        
-//         dialog->addButton("Yes",[this,dialog](brls::View *v){
-            
-            
-//             // util::writeSave(this->game,this->uid,this->save);
+u8 PKMInfoView::getAbilityListNumber(u8 n) {
+    if (this->pkm->abilities(1) == pksm::Ability::None) {
+        if (n >= 1) return n-1;
+    } else {
+        return n;
+    }
+}
 
-//             dialog->close([](){
-//                 brls::Application::popView();
-//             });
-//         });
 
-//         dialog->addButton("No",[dialog](brls::View *v){
-//             dialog->close([](){
-//                 brls::Application::popView();
-//             });
-//         });
 
-//         dialog->open();
-//     } else {
-//         brls::Application::popView();
-//     }
-//     return true;
-// }
-
-// void PKMInfoView::savePKM(std::shared_ptr<pksm::Sav> &save) {
-//     if (this->isParty) {
-//         save->pkm(this->pkm,slot);
-//     } else {
-//         save->pkm(this->pkm,box,slot,false);
-//     }
-// }
+void PKMInfoView::addChangesToSave(std::shared_ptr<pksm::Sav> &save) {
+    if (this->isParty)
+        save->pkm(*this->pkm,this->slot);
+    else
+        save->pkm(*this->pkm,this->box,this->slot,false);
+}

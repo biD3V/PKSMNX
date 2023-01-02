@@ -18,6 +18,9 @@
 
 class PKMInfoView : public brls::TabFrame
 {
+    private:
+        u8 getAbilityListNumber(u8 n);
+        
     public:
         bool pkmEdited;
         bool isParty;
@@ -25,6 +28,5 @@ class PKMInfoView : public brls::TabFrame
         u8 slot;
         std::unique_ptr<pksm::PKX> pkm;
         PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool party, bool& unsavedChanges);
-        //bool onCancel() override;
-        //void savePKM(std::shared_ptr<pksm::Sav> &save);
+        void addChangesToSave(std::shared_ptr<pksm::Sav> &save);
 };

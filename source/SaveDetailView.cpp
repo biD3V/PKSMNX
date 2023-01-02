@@ -18,10 +18,12 @@ SaveDetailView::SaveDetailView(AccountUid uid, Game game) : TabFrame()
         trainerInfo->addView(new brls::InputListItem("Name",this->save->otName(),"Input trainer name, max characters 12","",12));
         this->addTab("Trainer",trainerInfo);
 
+        this->addSeparator();
+
         brls::List *party = new brls::List();
         for (u8 i = 0; i < this->save->partyCount(); i++)
         {
-            brls::ListItem *pkmItem = new brls::ListItem(this->save->pkm(i)->nickname(),"",this->save->pkm(i)->species().localize(pksm::Language::ENG));
+            brls::ListItem *pkmItem = new brls::ListItem(this->save->pkm(i)->nickname());
             pkmItem->getClickEvent()->subscribe([this,i](brls::View *view){
                 PKMInfoView *pkmInfo = new PKMInfoView(this->save,0,i,true,this->hasChanges);
                 brls::Application::pushView(pkmInfo);
@@ -30,7 +32,35 @@ SaveDetailView::SaveDetailView(AccountUid uid, Game game) : TabFrame()
         }
         this->addTab("Party",party);
 
-        this->registerAction("Save", brls::Key::MINUS, [this]() {
+        brls::List *boxes = new brls::List();
+        for (u8 b = 0; b < this->save->unlockedBoxes(); b++)
+        {
+            std::string boxName = this->save->boxName(b) != "" ? this->save->boxName(b) : fmt::format("Box {:d}",b+1);
+            brls::ListItem *boxItem = new brls::ListItem(boxName);
+            boxItem->getClickEvent()->subscribe([this,b,boxName](brls::View *view){
+                brls::List *boxList = new brls::List();
+                for (u8 p = 0; p < 30; p++)
+                {
+                    if (this->save->pkm(b,p).get() != NULL) {
+                        brls::ListItem *pkmItem = new brls::ListItem(this->save->pkm(b,p)->nickname());
+                        pkmItem->getClickEvent()->subscribe([this,b,p](brls::View *view){
+                            PKMInfoView *pkmInfo = new PKMInfoView(this->save,b,p,false,this->hasChanges);
+                            brls::Application::pushView(pkmInfo);
+                        });
+                        boxList->addView(pkmItem);
+                    }
+                }
+                brls::AppletFrame *boxFrame = new brls::AppletFrame(true,true);
+                boxFrame->setTitle(boxName);
+                boxFrame->setContentView(boxList);
+                brls::Application::pushView(boxFrame);
+            });
+            boxes->addView(boxItem);
+        }
+        this->addTab("Boxes",boxes);
+        
+
+        this->registerAction("Save", brls::Key::X, [this]() {
             Result rc = util::writeSave(this->game,this->uid,this->save);
             if (R_FAILED(rc)) {
                 brls::Application::notify("Save Failed!");
