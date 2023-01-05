@@ -32,44 +32,73 @@ SaveDetailView::SaveDetailView(AccountUid uid, Game game) : TabFrame()
         }
         this->addTab("Party",party);
 
-        brls::List *boxes = new brls::List();
-        for (u8 b = 0; b < this->save->unlockedBoxes(); b++)
-        {
-            std::string boxName = this->save->boxName(b) != "" ? this->save->boxName(b) : fmt::format("Box {:d}",b+1);
-            brls::ListItem *boxItem = new brls::ListItem(boxName);
-            boxItem->getClickEvent()->subscribe([this,b,boxName](brls::View *view){
-                brls::List *boxList = new brls::List();
-                for (u8 p = 0; p < 30; p++)
-                {
-                    if (this->save->pkm(b,p).get() != NULL) {
-                        brls::ListItem *pkmItem = new brls::ListItem(this->save->pkm(b,p)->nickname());
-                        pkmItem->getClickEvent()->subscribe([this,b,p](brls::View *view){
-                            PKMInfoView *pkmInfo = new PKMInfoView(this->save,b,p,false,this->hasChanges);
-                            brls::Application::pushView(pkmInfo);
-                        });
-                        boxList->addView(pkmItem);
+        if (this->save->generation() < pksm::Generation::NINE) {
+            brls::List *boxes = new brls::List();
+            for (u8 b = 0; b < this->save->unlockedBoxes(); b++)
+            {
+                std::string boxName = this->save->boxName(b) != "" ? this->save->boxName(b) : fmt::format("Box {:d}",b+1);
+                brls::ListItem *boxItem = new brls::ListItem(boxName);
+                boxItem->getClickEvent()->subscribe([this,b,boxName](brls::View *view){
+                    brls::List *boxList = new brls::List();
+                    for (u8 p = 0; p < 30; p++)
+                    {
+                        if (this->save->pkm(b,p).get() != NULL) {
+                            brls::ListItem *pkmItem = new brls::ListItem(this->save->pkm(b,p)->nickname());
+                            pkmItem->getClickEvent()->subscribe([this,b,p](brls::View *view){
+                                PKMInfoView *pkmInfo = new PKMInfoView(this->save,b,p,false,this->hasChanges);
+                                brls::Application::pushView(pkmInfo);
+                            });
+                            boxList->addView(pkmItem);
+                        }
                     }
-                }
-                brls::AppletFrame *boxFrame = new brls::AppletFrame(true,true);
-                boxFrame->setTitle(boxName);
-                boxFrame->setContentView(boxList);
-                brls::Application::pushView(boxFrame);
-            });
-            boxes->addView(boxItem);
+                    brls::AppletFrame *boxFrame = new brls::AppletFrame(true,true);
+                    boxFrame->setTitle(boxName);
+                    boxFrame->setContentView(boxList);
+                    brls::Application::pushView(boxFrame);
+                });
+                boxes->addView(boxItem);
+            }
+            // TODO: implement grid view for boxes
+            // brls::Grid* boxes = new brls::Grid(5,6);
+            this->addTab("Boxes",boxes);
         }
-        this->addTab("Boxes",boxes);
         
 
         this->registerAction("Save", brls::Key::X, [this]() {
             Result rc = util::writeSave(this->game,this->uid,this->save);
             if (R_FAILED(rc)) {
-                brls::Application::notify("Save Failed!");
+                // brls::Application::notify("Save Failed!");
+                brls::Dialog *saveError = new brls::Dialog(fmt::format("Save failed with error: {:#x)",rc));
+                saveError->addButton("Ok",[saveError](brls::View *v){
+                    saveError->close();
+                });
+                saveError->open();
             } else {
                 brls::Application::notify("Saved.");
                 this->hasChanges = false;
             }
             return true;
         });
+
+        // this->registerAction("Backup", brls::Key::Y,[this]() {
+        //     Result rc = util::backupSave(this->uid,this->game);
+        //     if (R_FAILED(rc)) {
+        //         // brls::Application::notify("Save Failed!");
+        //         brls::Dialog *saveError = new brls::Dialog(fmt::format("Backup failed with error: {:#x)",rc));
+        //         saveError->addButton("Ok",[saveError](brls::View *v){
+        //             saveError->close();
+        //         });
+        //         saveError->open();
+        //     } else {
+        //         brls::Dialog *saveError = new brls::Dialog(fmt::format("{}/{:#x}_{:#x}","sdmc:/PKSMNX",this->uid.uid[0],this->uid.uid[1]));
+        //         saveError->addButton("Ok",[saveError](brls::View *v){
+        //             saveError->close();
+        //         });
+        //         saveError->open();
+        //     }
+
+        //     return true;
+        // });
     }
 }
 

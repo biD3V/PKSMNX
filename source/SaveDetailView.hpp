@@ -12,6 +12,8 @@
 #include "util.hpp"
 #include "PKMInfoView.hpp"
 
+#include <borealis/grid.hpp>
+
 class SaveDetailView : public brls::TabFrame
 {
     private:

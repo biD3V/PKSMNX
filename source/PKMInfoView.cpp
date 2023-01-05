@@ -27,7 +27,7 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
     brls::List *personalList = new brls::List();
     personalList->addView(new brls::ListItem(this->pkm->species().localize(pksm::Language::ENG)));
 
-    brls::SelectListItem *nature = new brls::SelectListItem("Nature",natureStrings,u8(this->pkm->nature()));
+    brls::SelectListItem *nature = new brls::SelectListItem("Mint Nature",natureStrings,u8(this->pkm->nature()));
     nature->getValueSelectedEvent()->subscribe([this,nature,&save,&unsavedChanges](int i){
         pksm::Nature selectedNature = static_cast<pksm::Nature>(i);
         this->pkm->nature(selectedNature);
@@ -147,6 +147,17 @@ PKMInfoView::PKMInfoView(std::shared_ptr<pksm::Sav> &save, u8 box, u8 slot, bool
     
     this->addTab("EVs",evList);
     this->addTab("IVs",ivList);
+
+    this->addSeparator();
+
+    brls::List *moveList = new brls::List();
+    for (u8 i = 0; i < 4; i++)
+    {
+        brls::ListItem *moveItem = new brls::ListItem(this->pkm->move(i).localize(pksm::Language::ENG));
+        moveList->addView(moveItem);
+    }
+
+    this->addTab("Moves",moveList);    
 }
 
 u8 PKMInfoView::getAbilityListNumber(u8 n) {

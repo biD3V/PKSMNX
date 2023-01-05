@@ -5,6 +5,9 @@
 #include <string>
 #include <switch.h>
 
+#include <sys/stat.h>
+#include <dirent.h>
+
 #include "Game.h"
 
 #include <sav/Sav.hpp>
@@ -27,4 +30,7 @@ namespace util
 
     Result loadSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> *save);
     Result writeSave(Game game,AccountUid uid, std::shared_ptr<pksm::Sav> save);
+    Result backupSave(AccountUid uid,Game game);
+    Result copyDir(std::string src, std::string dest);
+    bool isDir(std::string dir);
 } // namespace util
